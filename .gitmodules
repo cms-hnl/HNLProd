@@ -1,0 +1,12 @@
+[submodule "HNLTauPrompt"]
+	path = HNLTauPrompt
+	url = git@github.com:cms-hnl/HNLTauPrompt.git
+[submodule "RunKit"]
+	path = RunKit
+	url = git@github.com:kandrosov/RunKit.git
+[submodule "HNL"]
+	path = HNL
+	url = git@github.com:cms-hnl/HNL.git
+[submodule "genproductions"]
+	path = genproductions
+	url = git@github.com:cms-hnl/genproductions.git

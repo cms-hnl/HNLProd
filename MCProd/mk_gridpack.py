@@ -1,0 +1,60 @@
+import os
+import re
+import shutil
+from RunKit.sh_tools import sh_call
+from mk_prodcard import ProdCard
+
+def mk_gridpack(prodcard_dir, central_output_dir):
+  ana_path = os.environ['ANALYSIS_PATH']
+  gen_path = os.path.join(ana_path, 'genproductions', 'bin', 'MadGraph5_aMCatNLO')
+  params = 'params.json'
+  prod_card = ProdCard.from_json(os.path.join(prodcard_dir, params))
+
+  def rm_files():
+    for file in os.listdir(gen_path):
+      if file.startswith(prod_card.name):
+        file_path = os.path.join(gen_path, file)
+        if os.path.isfile(file_path):
+          os.remove(file_path)
+        else:
+          shutil.rmtree(file_path)
+
+  def find_gridpack():
+    tarballs = []
+    name_pattern = re.compile(f'{prod_card.name}_(.*)_tarball.tar.xz')
+    for file in os.listdir(gen_path):
+      match = name_pattern.match(file)
+      if match:
+        tarballs.append((file, match.group(1)))
+    if len(tarballs) == 0:
+      raise RuntimeError(f'{prod_card.name}: gridpack tarball not found.')
+    if len(tarballs) > 1:
+      raise RuntimeError(f'{prod_card.name}: multiple gridpack tarballs are found.')
+    return tarballs[0]
+
+  rm_files()
+
+  cmd = f'./gridpack_generation.sh "{prod_card.name}" "{os.path.relpath(prodcard_dir, start=gen_path)}"'
+  sh_call([cmd], shell=True, cwd=gen_path, env={}, verbose=1)
+
+  run_log = prod_card.name + '.log'
+  gridpack, cond = find_gridpack()
+
+  output = os.path.join(central_output_dir, prod_card.name)
+
+  os.makedirs(output, exist_ok=True)
+  shutil.move(os.path.join(gen_path, run_log), os.path.join(output, f'{prod_card.name}_{cond}.log'))
+  shutil.move(os.path.join(gen_path, gridpack), os.path.join(output, gridpack))
+  shutil.copy(os.path.join(prodcard_dir, params), os.path.join(output, params))
+
+  rm_files()
+
+
+if __name__ == "__main__":
+  import argparse
+  parser = argparse.ArgumentParser(description='Create HNL gridpack.')
+  parser.add_argument('--prodcard', required=True, type=str, help="path to prodcard")
+  parser.add_argument('--output', required=True, type=str, help="output path with all gridpacks are stored")
+  args = parser.parse_args()
+
+  mk_gridpack(args.prodcard, args.output)

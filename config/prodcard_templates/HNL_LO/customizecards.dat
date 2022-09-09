@@ -1,0 +1,11 @@
+set param_card mass PDGID MASS
+set param_card numixing 1 E_MIXING
+set param_card numixing 2 0.000000e+00
+set param_card numixing 3 0.000000e+00
+set param_card numixing 4 MU_MIXING
+set param_card numixing 5 0.000000e+00
+set param_card numixing 6 0.000000e+00
+set param_card numixing 7 TAU_MIXING
+set param_card numixing 8 0.000000e+00
+set param_card numixing 9 0.000000e+00
+set decay PDGID AUTO
