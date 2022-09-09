@@ -9,16 +9,18 @@ function run_cmd {
     fi
 }
 
-install_cmssw() {
+do_install_cmssw() {
   local this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURCE[0]}" )"
   local this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 
   export SCRAM_ARCH=$1
   local CMSSW_VER=$2
   local os_version=$3
+  local inst_type=$4
   if ! [ -f "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed" ]; then
     run_cmd mkdir -p "$this_dir/soft/CentOS$os_version"
     run_cmd cd "$this_dir/soft/CentOS$os_version"
+    run_cmd source /cvmfs/cms.cern.ch/cmsset_default.sh
     if [ -d $CMSSW_VER ]; then
       echo "Removing incomplete $CMSSW_VER installation..."
       run_cmd rm -rf $CMSSW_VER
@@ -27,9 +29,24 @@ install_cmssw() {
     run_cmd scramv1 project CMSSW $CMSSW_VER
     run_cmd cd $CMSSW_VER/src
     run_cmd eval `scramv1 runtime -sh`
+    if [ $inst_type = "gen" ]; then
+      run_cmd mkdir -p "Configuration/GenProduction/python"
+    fi
     run_cmd scram b -j8
     run_cmd cd "$this_dir"
     touch "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed"
+  fi
+}
+
+install_cmssw() {
+  local this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURCE[0]}" )"
+  local this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
+  local scram_arch=$1
+  local cmssw_version=$2
+  local os_version=$3
+  local inst_type=$4
+  if ! [ -f "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed" ]; then
+    run_cmd /usr/bin/env -i bash "$this_file" install_cmssw $scram_arch $cmssw_version $os_version $inst_type
   fi
 }
 
@@ -52,10 +69,13 @@ action() {
 
   local os_version=$(cat /etc/os-release | grep VERSION_ID | sed -E 's/VERSION_ID="([0-9]+)"/\1/')
   if [ $os_version = "7" ]; then
-    /usr/bin/env bash "$this_file" install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7
-    /usr/bin/env bash "$this_file" install_cmssw slc7_amd64_gcc10 CMSSW_12_4_8 7
+    run_cmd install_cmssw slc7_amd64_gcc530 CMSSW_8_0_36_UL_patch1 7 hlt
+    run_cmd install_cmssw slc7_amd64_gcc630 CMSSW_9_4_16_UL 7 hlt
+    run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_2_20_UL 7 hlt
+    run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
+    run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_8 7 nano
   elif [ $os_version = "8" ]; then
-    /usr/bin/env bash "$this_file" install_cmssw el8_amd64_gcc10 CMSSW_12_4_8 8
+    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_8 8 nano
   else
     echo "Unsupported OS version $os_version"
     kill -INT $$
@@ -68,7 +88,7 @@ action() {
 }
 
 if [ "X$1" = "Xinstall_cmssw" ]; then
-  install_cmssw "${@:2}"
+  do_install_cmssw "${@:2}"
 else
   action
 fi

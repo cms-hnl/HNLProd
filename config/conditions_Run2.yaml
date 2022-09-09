@@ -1,0 +1,108 @@
+default:
+  SCRAM_ARCH: slc7_amd64_gcc700
+  CMSSW: CMSSW_10_6_29
+  geometry: DB:Extended
+  customise:
+    - Configuration/DataProcessing/Utils.addMonitoring
+
+default_step:
+  LHEGEN:
+    eventcontent: RAWSIM,LHE
+    datatier: GEN,LHE
+    step: LHE,GEN
+    runUnscheduled: False
+  SIM:
+    eventcontent: RAWSIM
+    datatier: GEN-SIM
+    step: SIM
+    runUnscheduled: True
+  DIGIPremix:
+    eventcontent: PREMIXRAW
+    datatier: GEN-SIM-DIGI
+    step: DIGI,DATAMIX,L1,DIGI2RAW
+    procModifiers: premix_stage2
+    datamix: PreMix
+  HLT:
+    eventcontent: RAWSIM
+    datatier: GEN-SIM-RAW
+    runUnscheduled: False
+    customise_commands:
+      - process.source.bypassVersionCheck = cms.untracked.bool(True)
+  RECO:
+    eventcontent: AODSIM
+    datatier: AODSIM
+    step: RAW2DIGI,L1Reco,RECO,RECOSIM
+    runUnscheduled: True
+  MINIAOD:
+    eventcontent: MINIAODSIM
+    datatier: MINIAODSIM
+    step: PAT
+    runUnscheduled: True
+    procModifiers: run2_miniAOD_UL
+
+Run2_2016APV:
+  default:
+    GlobalTag: 106X_mcRun2_asymptotic_preVFP_v11
+    era: Run2_2016_HIPM
+    beamspot: Realistic25ns13TeV2016Collision
+  DIGIPremix:
+    pileup_input: dbs:/Neutrino_E-10_gun/RunIISummer20ULPrePremix-UL16_106X_mcRun2_asymptotic_v13-v1/PREMIX
+  HLT:
+    SCRAM_ARCH: slc7_amd64_gcc530
+    CMSSW: CMSSW_8_0_36_UL_patch1
+    GlobalTag: 80X_mcRun2_asymptotic_2016_TrancheIV_v6
+    outputCommand:
+      - keep *_mix_*_*
+      - keep *_genPUProtons_*_*
+    inputComands:
+      - keep *
+      - drop *_*_BMTF_*
+      - drop *PixelFEDChannel*_*_*_*
+    step: HLT:25ns15e33_v4
+
+Run2_2016:
+  default:
+    GlobalTag: 106X_mcRun2_asymptotic_v17
+    era: Run2_2016
+    beamspot: Realistic25ns13TeV2016Collision
+  DIGIPremix:
+    pileup_input: dbs:/Neutrino_E-10_gun/RunIISummer20ULPrePremix-UL16_106X_mcRun2_asymptotic_v13-v1/PREMIX
+  HLT:
+    SCRAM_ARCH: slc7_amd64_gcc530
+    CMSSW: CMSSW_8_0_36_UL_patch1
+    GlobalTag: 80X_mcRun2_asymptotic_2016_TrancheIV_v6
+    outputCommand:
+      - keep *_mix_*_*
+      - keep *_genPUProtons_*_*
+    inputCommands:
+      - keep *
+      - drop *_*_BMTF_*
+      - drop *PixelFEDChannel*_*_*_*
+    step: HLT:25ns15e33_v4
+
+Run2_2017:
+  default:
+    GlobalTag: 106X_mc2017_realistic_v9
+    era: Run2_2017
+    beamspot: Realistic25ns13TeVEarly2017Collision
+  DIGIPremix:
+    pileup_input: dbs:/Neutrino_E-10_gun/RunIISummer20ULPrePremix-UL17_106X_mc2017_realistic_v6-v3/PREMIX
+  HLT:
+    SCRAM_ARCH: slc7_amd64_gcc630
+    CMSSW: CMSSW_9_4_16_UL
+    GlobalTag: 94X_mc2017_realistic_v15
+    step: HLT:2e34v40
+
+Run2_2018:
+  default:
+    GlobalTag: 106X_upgrade2018_realistic_v16_L1v1
+    era: Run2_2018
+    beamspot: Realistic25ns13TeVEarly2018Collision
+  DIGIPremix:
+    pileup_input: dbs:/Neutrino_E-10_gun/RunIISummer20ULPrePremix-UL18_106X_upgrade2018_realistic_v11_L1v1-v2/PREMIX
+  HLT:
+    CMSSW: CMSSW_10_2_20_UL
+    GlobalTag: 102X_upgrade2018_realistic_v15
+    step: HLT:2018v32
+  RECO:
+    step: RAW2DIGI,L1Reco,RECO,RECOSIM,EI
