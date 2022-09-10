@@ -16,6 +16,16 @@ file_names = {
   "MINIAOD": "miniAOD",
 }
 
+output_module = {
+  "LHEGEN": "RAWSIMoutput",
+  "SIM": "RAWSIMoutput",
+  "DIGIPremix": "PREMIXRAWoutput",
+  "HLT": "RAWSIMoutput",
+  "RECO": "AODSIMoutput",
+  "MINIAOD": "MINIAODSIMoutput",
+
+}
+
 def run_prod(gridpack_path, fragment_path, cond_path, era, last_step, seed, n_evt, output_path, work_dir):
   #prod_card = ProdCard.from_json(os.path.join(gridpack_path, 'params.json'))
   with open(cond_path, 'r') as f:
@@ -46,7 +56,10 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, last_step, seed, n_ev
     step_out = os.path.join(work_dir, f'{step}.root')
     if os.path.exists(step_out):
       #os.remove(step_out)
-      print(f'{step}.root already exists. Moving to the next step.')
+      msg = f'{step}.root already exists.'
+      if step_index != last_step_index:
+        msg += ' Moving to the next step.'
+      print(msg)
       continue
     try:
       step_params = get_step_params(step)
@@ -56,7 +69,10 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, last_step, seed, n_ev
         cmssw_env[cmssw] = get_cmsenv(cmssw_dir)
         cmssw_env[cmssw]['X509_USER_PROXY'] = os.environ['X509_USER_PROXY']
         cmssw_env[cmssw]['HOME'] = os.environ['HOME']
-      customise_commands = [ f'process.RandomNumberGeneratorService.externalLHEProducer.initialSeed=int({seed})' ]
+      customise_commands = [
+        f'process.RandomNumberGeneratorService.externalLHEProducer.initialSeed=int({seed})',
+        'process.MessageLogger.cerr.FwkReport.reportEvery = 100',
+      ]
       cmd = 'cmsDriver.py'
       if step == 'LHEGEN':
         fragment_dir, fragment_name = os.path.split(fragment_path)
@@ -66,7 +82,8 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, last_step, seed, n_ev
           os.symlink(os.path.join(os.environ['ANALYSIS_PATH'], fragment_path), fragment_link_path)
 
         cmd += f' {fragment_link}'
-        customise_commands.append(f'process.externalLHEProducer.args = cms.vstring(\"{gridpack_path}\")')
+        customise_commands.append(f'process.externalLHEProducer.args = cms.vstring("{gridpack_path}")')
+        customise_commands.append(f'process.source.firstRun = cms.untracked.uint32({seed})')
 
       cmd += f' --python_filename {step}.py --eventcontent {step_params["eventcontent"]}'
       cmd += f' --datatier {step_params["datatier"]} --fileout file:{step}.root --conditions {step_params["GlobalTag"]}'
@@ -88,6 +105,9 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, last_step, seed, n_ev
           cmd += f' --{cmd_type} "{",".join(cmds)}"'
       cmd += ''.join(' --customise ' + x for x in step_params.get('customise', []))
       customise_commands.extend(step_params.get('customise_commands', []))
+      if step_index == last_step_index:
+        customise_commands.append(f'process.{output_module[step]}.compressionAlgorithm = cms.untracked.string("LZMA")')
+        customise_commands.append(f'process.{output_module[step]}.compressionLevel = cms.untracked.int32(9)')
       customise_cmd = '; '.join(customise_commands)
       cmd += f" --customise_commands '{customise_cmd}'"
 
