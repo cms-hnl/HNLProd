@@ -6,8 +6,9 @@ import shutil
 from collections import OrderedDict
 
 class ProdCard:
-  def __init__(self, type, mass, e_mixing, mu_mixing, tau_mixing):
+  def __init__(self, type, mass, e_mixing, mu_mixing, tau_mixing, com_energy):
     self.type = type
+    self.com_energy = com_energy
     if type.lower() == 'dirac':
       self.pdg_id = '9990012'
       self.model = 'SM_HeavyN_Dirac_CKM_Masses_LO'
@@ -19,7 +20,10 @@ class ProdCard:
     else:
       raise RuntimeError(f'Unsupported HNL type = "{type}"')
 
-    self.mass = mass
+    if int(mass) == mass:
+      self.mass = int(mass)
+    else:
+      self.mass = mass
     if mass <= 0:
       raise RuntimeError(f'HNL mass should be a positive number')
 
@@ -41,6 +45,7 @@ class ProdCard:
       'type': self.type,
       'mass': self.mass,
       'mixings': dict(self.mixings),
+      'com_energy': self.com_energy,
     }
     with open(json_file, 'w') as f:
       json.dump(params, f, indent=2)
@@ -50,7 +55,7 @@ class ProdCard:
     with open(json_file, 'r') as f:
       params = json.load(f)
     return ProdCard(params['type'], params['mass'], params['mixings'].get('e', 0.), params['mixings'].get('mu', 0.),
-                    params['mixings'].get('tau', 0.))
+                    params['mixings'].get('tau', 0.), params['com_energy'])
 
 def mk_prodcard(templates, central_output_dir, prod_card):
   output_dir = os.path.join(central_output_dir, prod_card.name)
@@ -71,9 +76,6 @@ def mk_prodcard(templates, central_output_dir, prod_card):
       with open(file_out, 'w') as f:
         f.write(data)
 
-  for file in ['madspin_card.dat', 'run_card.dat']:
-    copy(file)
-
   custom_repl = {
     'PDGID': prod_card.pdg_id,
     'MASS': str(prod_card.mass),
@@ -90,7 +92,9 @@ def mk_prodcard(templates, central_output_dir, prod_card):
     proc_repl[l_name] = ' '.join([ x[:2] + l_sign for x in prod_card.positive_mixings ])
   copy('proc_card.dat', proc_repl)
 
+  copy('madspin_card.dat')
   copy('extramodels.dat', { 'MODEL': prod_card.model })
+  copy('run_card.dat', { 'EBEAM': f'{prod_card.com_energy / 2:.1f}' })
 
   prod_card.to_json(os.path.join(output_dir, 'params.json'))
 
@@ -102,10 +106,11 @@ if __name__ == "__main__":
   parser.add_argument('--output', required=True, type=str, help="output path with all prodcards")
   parser.add_argument('--type', required=True, type=str, help="HNL type: dirac or majorana")
   parser.add_argument('--mass', required=True, type=float, help="HNL mass (GeV)")
+  parser.add_argument('--com-energy', required=True, type=float, help="Center-of-mass energy of pp collisions (GeV)")
   parser.add_argument('--e-mixing', required=True, type=float, help="HNL-nu_e mixing parameter")
   parser.add_argument('--mu-mixing', required=True, type=float, help="HNL-nu_mu mixing parameter")
   parser.add_argument('--tau-mixing', required=True, type=float, help="HNL-nu_tau mixing parameter")
   args = parser.parse_args()
 
-  prod_card = ProdCard(args.type, args.mass, args.e_mixing, args.mu_mixing, args.tau_mixing)
+  prod_card = ProdCard(args.type, args.mass, args.e_mixing, args.mu_mixing, args.tau_mixing, args.com_energy)
   mk_prodcard(args.templates, args.output, prod_card)

@@ -62,8 +62,6 @@ action() {
   export ANALYSIS_PATH="$this_dir"
   export ANALYSIS_DATA_PATH="$ANALYSIS_PATH/data"
   export X509_USER_PROXY="$ANALYSIS_DATA_PATH/voms.proxy"
-  export PRODCARD_STORAGE="/eos/home-k/kandroso/cms-hnl/prodcards"
-  export GRIDPACK_STORAGE="/eos/home-k/kandroso/cms-hnl/gridpacks"
 
   export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts
 
@@ -73,9 +71,9 @@ action() {
     run_cmd install_cmssw slc7_amd64_gcc630 CMSSW_9_4_16_UL 7 hlt
     run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_2_20_UL 7 hlt
     run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
-    run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_8 7 nano
+    run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_8 7 gen
   elif [ $os_version = "8" ]; then
-    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_8 8 nano
+    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_8 8 gen
   else
     echo "Unsupported OS version $os_version"
     kill -INT $$

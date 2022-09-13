@@ -1,8 +1,29 @@
 import os
 import re
 import shutil
+import sys
+
+if __name__ == "__main__":
+  file_dir = os.path.dirname(os.path.abspath(__file__))
+  sys.path.append(os.path.dirname(file_dir))
+  __package__ = 'MCProd'
+
 from RunKit.sh_tools import sh_call
-from mk_prodcard import ProdCard
+from .mk_prodcard import ProdCard
+
+def find_gridpack(path, prod_card_name):
+  tarballs = []
+  name_pattern = re.compile(f'{prod_card_name}_(.*)_tarball.tar.xz')
+  for file in os.listdir(path):
+    match = name_pattern.match(file)
+    if match:
+      tarballs.append((file, match.group(1)))
+  if len(tarballs) == 0:
+    raise RuntimeError(f'{prod_card_name}: gridpack tarball not found.')
+  if len(tarballs) > 1:
+    raise RuntimeError(f'{prod_card_name}: multiple gridpack tarballs are found.')
+  return tarballs[0]
+
 
 def mk_gridpack(prodcard_dir, central_output_dir):
   ana_path = os.environ['ANALYSIS_PATH']
@@ -19,26 +40,13 @@ def mk_gridpack(prodcard_dir, central_output_dir):
         else:
           shutil.rmtree(file_path)
 
-  def find_gridpack():
-    tarballs = []
-    name_pattern = re.compile(f'{prod_card.name}_(.*)_tarball.tar.xz')
-    for file in os.listdir(gen_path):
-      match = name_pattern.match(file)
-      if match:
-        tarballs.append((file, match.group(1)))
-    if len(tarballs) == 0:
-      raise RuntimeError(f'{prod_card.name}: gridpack tarball not found.')
-    if len(tarballs) > 1:
-      raise RuntimeError(f'{prod_card.name}: multiple gridpack tarballs are found.')
-    return tarballs[0]
-
   rm_files()
 
   cmd = f'./gridpack_generation.sh "{prod_card.name}" "{os.path.relpath(prodcard_dir, start=gen_path)}"'
   sh_call([cmd], shell=True, cwd=gen_path, env={}, verbose=1)
 
   run_log = prod_card.name + '.log'
-  gridpack, cond = find_gridpack()
+  gridpack, cond = find_gridpack(gen_path, prod_card.name)
 
   output = os.path.join(central_output_dir, prod_card.name)
 
