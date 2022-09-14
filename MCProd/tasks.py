@@ -174,7 +174,7 @@ class MkGridpack(Task, HTCondorWorkflow, law.LocalWorkflow):
 class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
   def __init__(self, *args, **kwargs):
     if 'max_runtime' not in kwargs:
-      kwargs['max_runtime'] = 12
+      kwargs['max_runtime'] = 24
     if 'n_cpus' not in kwargs:
       kwargs['n_cpus'] = 2
     super(RunProd, self).__init__(*args, **kwargs)

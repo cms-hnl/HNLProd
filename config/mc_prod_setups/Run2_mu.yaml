@@ -1,0 +1,28 @@
+prodcard_templates: config/prodcard_templates/HNL_LO
+prodcard_storage: /eos/home-k/kandroso/cms-hnl/prodcards/13TeV
+gridpack_storage: /eos/home-k/kandroso/cms-hnl/gridpacks/13TeV
+output_storage: /eos/home-k/kandroso/cms-hnl/Run2/MINIAOD
+cond_config: config/conditions_Run2.yaml
+last_step: MINIAOD
+eras:
+  - Run2_2018
+gen_fragment: MCProd/gen_fragment.py
+default:
+  type: majorana
+  e_mixing: 0
+  tau_mixing: 0
+  runs: [ '1-100' ]
+  events_per_run: 2000
+points:
+  - mass: 1
+    mu_mixing: 0.012
+  - mass: 2
+    mu_mixing: 0.004
+  - mass: 3
+    mu_mixing: 0.0022
+  - mass: 4
+    mu_mixing: 0.0015
+  - mass: 5
+    mu_mixing: 0.0011
+  - mass: 6
+    mu_mixing: 0.0009
