@@ -2,4 +2,6 @@
 /output
 /data
 /.law
+/.crabOverseer
+/crab
 __pycache__
