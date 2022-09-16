@@ -32,6 +32,12 @@ do_install_cmssw() {
     if [ $inst_type = "gen" ]; then
       run_cmd mkdir -p "Configuration/GenProduction/python"
     fi
+    if [ $inst_type = "nano_prod" ]; then
+      run_cmd mkdir -p "HNLTauPrompt/NanoProd"
+      run_cmd ln -s "$this_dir/HNLTauPrompt/NanoProd" "HNLTauPrompt/NanoProd/python"
+    fi
+    run_cmd mkdir -p "$this_dir/soft/CentOS$os_version/$CMSSW_VER/bin_ext"
+    run_cmd ln -s $(which python3) "$this_dir/soft/CentOS$os_version/$CMSSW_VER/bin_ext/python"
     run_cmd scram b -j8
     run_cmd cd "$this_dir"
     touch "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed"
@@ -52,6 +58,7 @@ install_cmssw() {
 
 action() {
   # determine the directory of this file
+  local mode=$1
   local this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURCE[0]}" )"
   local this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
 
@@ -73,13 +80,24 @@ action() {
     run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
     run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_8 7 gen
   elif [ $os_version = "8" ]; then
-    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_8 8 gen
+    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_8 8 nano_prod
   else
     echo "Unsupported OS version $os_version"
     kill -INT $$
   fi
 
-  source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_101 x86_64-centos7-gcc8-opt
+  if [ $mode = "nano_prod" ] ; then
+    local cmssw_ver=CMSSW_12_4_8
+    run_cmd cd "$this_dir/soft/CentOS$os_version/$cmssw_ver"
+    run_cmd eval `scramv1 runtime -sh`
+    export PATH="$PATH:$this_dir/soft/CentOS$os_version/$cmssw_ver/bin_ext"
+    autoload bashcompinit
+    bashcompinit
+    source /cvmfs/cms.cern.ch/common/crab-setup.sh prod
+    run_cmd cd "$this_dir"
+  else
+    source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_101 x86_64-centos${os_version}-gcc8-opt
+  fi
   source /afs/cern.ch/user/m/mrieger/public/law_sw/setup.sh
 
   source "$( law completion )" ""
@@ -88,5 +106,5 @@ action() {
 if [ "X$1" = "Xinstall_cmssw" ]; then
   do_install_cmssw "${@:2}"
 else
-  action
+  action "$@"
 fi
