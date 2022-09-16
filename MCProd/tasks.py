@@ -1,3 +1,4 @@
+import copy
 import law
 import luigi
 import math
@@ -10,6 +11,7 @@ from .mk_prodcard import ProdCard, mk_prodcard
 from .mk_gridpack import find_gridpack, mk_gridpack
 from .run_prod import run_prod, step_to_file_name
 from RunKit.grid_helper_tasks import CreateVomsProxy
+from RunKit.sh_tools import timed_call_wrapper, update_kerberos_ticket
 
 law.contrib.load("htcondor")
 
@@ -46,6 +48,11 @@ def create_point(prod_setup, cond, point_params):
   params['runs'] = parse_int_list(params.get('runs', []))
   return params
 
+def copy_param(ref_param, new_default):
+  param = copy.deepcopy(ref_param)
+  param._default = new_default
+  return param
+
 class Task(law.Task):
   setup = luigi.Parameter()
 
@@ -70,9 +77,11 @@ class Task(law.Task):
     self.prod_setup = Task.prod_setup
     self.cond = Task.cond
     self.points = Task.points
+    _, setup_full_name = os.path.split(setup_path)
+    self.setup_name, _ = os.path.splitext(setup_full_name)
 
   def store_parts(self):
-    return (self.__class__.__name__, )
+    return (self.__class__.__name__, self.setup_name, )
 
   def ana_path(self):
     return os.getenv("ANALYSIS_PATH")
@@ -94,10 +103,24 @@ class Task(law.Task):
       return path
     return os.path.join(self.ana_path(), path)
 
+class HTCondorWorkflowProxy(law.htcondor.workflow.HTCondorWorkflowProxy):
+  def __init__(self, *args, **kwargs):
+    super(HTCondorWorkflowProxy, self).__init__(*args, **kwargs)
+    if self.task.krenew > 0:
+      self.kerberos_update = timed_call_wrapper(update_kerberos_ticket, self.task.krenew * 60 * 60)
+
+  def poll(self):
+    self.kerberos_update()
+    super(HTCondorWorkflowProxy, self).poll()
+
 class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
   max_runtime = law.DurationParameter(default=12.0, unit="h", significant=True,
                                       description="maximum runtime, default unit is hours")
   n_cpus = luigi.IntParameter(default=1, description="number of CPU slots")
+  krenew = luigi.IntParameter(default=12, significant=False, description="call 'kinit -R' each krenew hours")
+  poll_interval = copy_param(law.htcondor.HTCondorWorkflow.poll_interval, 5)
+
+  workflow_proxy_cls = HTCondorWorkflowProxy
 
   def htcondor_output_directory(self):
     # the directory where submission meta data should be stored
@@ -142,10 +165,7 @@ class MkProdcard(Task, law.LocalWorkflow):
     self.output().touch()
 
 class MkGridpack(Task, HTCondorWorkflow, law.LocalWorkflow):
-  def __init__(self, *args, **kwargs):
-    if 'max_runtime' not in kwargs:
-      kwargs['max_runtime'] = 1
-    super(MkGridpack, self).__init__(*args, **kwargs)
+  max_runtime = copy_param(HTCondorWorkflow.max_runtime, 1.0)
 
   def workflow_requires(self):
     return { "prodcard": MkProdcard.req(self, workflow='local') }
@@ -172,19 +192,18 @@ class MkGridpack(Task, HTCondorWorkflow, law.LocalWorkflow):
     self.output().touch()
 
 class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
-  def __init__(self, *args, **kwargs):
-    if 'max_runtime' not in kwargs:
-      kwargs['max_runtime'] = 12
-    if 'n_cpus' not in kwargs:
-      kwargs['n_cpus'] = 2
-    super(RunProd, self).__init__(*args, **kwargs)
+  max_runtime = copy_param(HTCondorWorkflow.max_runtime, 24.0)
+  n_cpus = copy_param(HTCondorWorkflow.n_cpus, 2)
 
   def workflow_requires(self):
-    return { "voms": CreateVomsProxy.req(self), "gridpack": MkGridpack.req(self, n_cpus=1, max_runtime=1) }
+    return {
+      "voms": CreateVomsProxy.req(self),
+      "gridpack": MkGridpack.req(self, n_cpus=MkGridpack.n_cpus._default, max_runtime=MkGridpack.max_runtime._default)
+    }
 
-  # def requires(self):
-  #   point_id, point, era, run = self.branch_data
-  #   return [ CreateVomsProxy.req(self), MkGridpack.req(self, n_cpus=1, max_runtime=1, branch=point_id) ]
+  def requires(self):
+    point_id, point, era, run = self.branch_data
+    return [ CreateVomsProxy.req(self), MkGridpack.req(self, n_cpus=1, max_runtime=1, branch=point_id) ]
 
   def create_branch_map(self):
     branches = {}
