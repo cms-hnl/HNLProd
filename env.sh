@@ -29,18 +29,23 @@ do_install_cmssw() {
     run_cmd scramv1 project CMSSW $CMSSW_VER
     run_cmd cd $CMSSW_VER/src
     run_cmd eval `scramv1 runtime -sh`
-    if [ $inst_type = "gen" ]; then
-      run_cmd mkdir -p "Configuration/GenProduction/python"
-    fi
-    if [ $inst_type = "nano_prod" ]; then
+    if [ "$CMSSW_VER" = "CMSSW_12_4_8" ]; then
+      # run_cmd git cms-init
+      # run_cmd git remote add cms-l1t-offline git@github.com:cms-l1t-offline/cmssw.git
+      # run_cmd git fetch cms-l1t-offline l1t-integration-CMSSW_12_4_0
+      # run_cmd git cms-merge-topic -u cms-l1t-offline:l1t-integration-v134
+      # run_cmd git clone https://github.com/cms-l1t-offline/L1Trigger-L1TCalorimeter.git L1Trigger/L1TCalorimeter/data
+      # run_cmd git cms-checkdeps -A -a
       run_cmd mkdir -p "HNLTauPrompt/NanoProd"
       run_cmd ln -s "$this_dir/HNLTauPrompt/NanoProd" "HNLTauPrompt/NanoProd/python"
+      run_cmd ln -s "$this_dir/HNL" "HNL"
     fi
+    run_cmd mkdir -p "Configuration/GenProduction/python"
     run_cmd mkdir -p "$this_dir/soft/CentOS$os_version/$CMSSW_VER/bin_ext"
     run_cmd ln -s $(which python3) "$this_dir/soft/CentOS$os_version/$CMSSW_VER/bin_ext/python"
     run_cmd scram b -j8
     run_cmd cd "$this_dir"
-    touch "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed"
+    run_cmd touch "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed"
   fi
 }
 
@@ -52,7 +57,7 @@ install_cmssw() {
   local os_version=$3
   local inst_type=$4
   if ! [ -f "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed" ]; then
-    run_cmd /usr/bin/env -i bash "$this_file" install_cmssw $scram_arch $cmssw_version $os_version $inst_type
+    run_cmd /usr/bin/env -i HOME=$HOME bash "$this_file" install_cmssw $scram_arch $cmssw_version $os_version $inst_type
   fi
 }
 
@@ -86,7 +91,7 @@ action() {
     kill -INT $$
   fi
 
-  if [ $mode = "nano_prod" ] ; then
+  if [ "x$mode" = "xnano_prod" ] ; then
     local cmssw_ver=CMSSW_12_4_8
     run_cmd cd "$this_dir/soft/CentOS$os_version/$cmssw_ver"
     run_cmd eval `scramv1 runtime -sh`

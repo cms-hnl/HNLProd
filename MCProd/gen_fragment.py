@@ -22,9 +22,11 @@ generator = cms.EDFilter("Pythia8HadronizerFilter",
         pythia8CommonSettingsBlock,
         pythia8CP5SettingsBlock,
         pythia8PSweightsSettingsBlock,
+        processParameters = cms.vstring('LesHouches:setLifetime = 2'),
         parameterSets = cms.vstring('pythia8CommonSettings',
                                     'pythia8CP5Settings',
                                     'pythia8PSweightsSettings',
+                                    'processParameters',
                                     )
     )
 )

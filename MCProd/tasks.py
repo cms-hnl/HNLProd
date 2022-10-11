@@ -9,7 +9,8 @@ import tempfile
 import yaml
 from .mk_prodcard import ProdCard, mk_prodcard
 from .mk_gridpack import find_gridpack, mk_gridpack
-from .run_prod import run_prod, step_to_file_name
+from .run_prod import run_prod, step_to_file_name, prod_steps
+from .mk_l1tuple import mk_l1tuple
 from RunKit.grid_helper_tasks import CreateVomsProxy
 from RunKit.sh_tools import timed_call_wrapper, update_kerberos_ticket
 
@@ -103,11 +104,17 @@ class Task(law.Task):
       return path
     return os.path.join(self.ana_path(), path)
 
+  def law_job_home(self):
+    if 'LAW_JOB_HOME' in os.environ:
+      return os.environ['LAW_JOB_HOME'], False
+    os.makedirs(self.local_path(), exist_ok=True)
+    return tempfile.mkdtemp(dir=self.local_path()), True
+
 class HTCondorWorkflowProxy(law.htcondor.workflow.HTCondorWorkflowProxy):
   def __init__(self, *args, **kwargs):
     super(HTCondorWorkflowProxy, self).__init__(*args, **kwargs)
     if self.task.krenew > 0:
-      self.kerberos_update = timed_call_wrapper(update_kerberos_ticket, self.task.krenew * 60 * 60)
+      self.kerberos_update = timed_call_wrapper(update_kerberos_ticket, self.task.krenew * 60 * 60, verbose=1)
 
   def poll(self):
     self.kerberos_update()
@@ -117,7 +124,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
   max_runtime = law.DurationParameter(default=12.0, unit="h", significant=True,
                                       description="maximum runtime, default unit is hours")
   n_cpus = luigi.IntParameter(default=1, description="number of CPU slots")
-  krenew = luigi.IntParameter(default=12, significant=False, description="call 'kinit -R' each krenew hours")
+  krenew = luigi.IntParameter(default=1, significant=False, description="call 'kinit -R' each krenew hours")
   poll_interval = copy_param(law.htcondor.HTCondorWorkflow.poll_interval, 5)
 
   workflow_proxy_cls = HTCondorWorkflowProxy
@@ -222,11 +229,6 @@ class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     root_file = os.path.join(self.prod_setup['output_storage'], era, point['prod_card'].name, file_name)
     return law.LocalFileTarget(root_file)
 
-  def law_job_home(self):
-    if 'LAW_JOB_HOME' in os.environ:
-      return os.environ['LAW_JOB_HOME'], False
-    return tempfile.mkdtemp(dir=self.local_path()), True
-
   def run(self):
     point_id, point, era, run = self.branch_data
     print(f"Running production {point['prod_card'].name} era={era} run={run}...")
@@ -235,11 +237,80 @@ class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     gridpack_path = os.path.join(gridpack_dir, gridpack_file)
     fragment_path = self.to_abs(self.prod_setup['gen_fragment'])
     cond_path = self.to_abs(self.prod_setup['cond_config'])
+    first_step = self.prod_setup.get('first_step', prod_steps[0])
     last_step = self.prod_setup['last_step']
     n_evt = point['events_per_run']
     output_dir, output_file = os.path.split(self.output().path)
+    if first_step != prod_steps[0]:
+      first_step_index = prod_steps.index(first_step)
+      prev_step = prod_steps[first_step_index - 1]
+      file_name_prefix = step_to_file_name[prev_step]
+      file_name = f'{file_name_prefix}_{run}.root'
+      prev_root_file = os.path.join(self.prod_setup['previous_step_storage'], era, point['prod_card'].name, file_name)
+      if not os.path.exists(prev_root_file):
+        raise RuntimeError(f"The results from the previous steps are not found in {prev_root_file}.")
+    else:
+      prev_root_file = None
+
     work_dir, work_dir_is_tmp = self.law_job_home()
-    run_prod(gridpack_path, fragment_path, cond_path, era, last_step, run, n_evt, output_dir, work_dir,
-             remove_outputs=True)
+    run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step, run, n_evt, output_dir,
+             prev_root_file, work_dir, remove_outputs=True)
+    if work_dir_is_tmp:
+      shutil.rmtree(work_dir)
+
+class MkL1Tuples(Task, HTCondorWorkflow, law.LocalWorkflow):
+  max_runtime = copy_param(HTCondorWorkflow.max_runtime, 8.0)
+  n_cpus = copy_param(HTCondorWorkflow.n_cpus, 2)
+
+  def workflow_requires(self):
+    return {
+      "raw": RunProd.req(self, n_cpus=RunProd.n_cpus._default, max_runtime=RunProd.max_runtime._default)
+    }
+
+  def requires(self):
+    point_id, point, era, run = self.branch_data
+    return [ RunProd.req(self, n_cpus=RunProd.n_cpus._default, max_runtime=RunProd.max_runtime._default) ]
+
+  def create_branch_map(self):
+    branches = {}
+    task_id = 0
+    for era_id, era in enumerate(self.prod_setup['eras']):
+      for point_id, point in enumerate(self.points):
+        for run in point['runs']:
+          branches[task_id] = (point_id, point, era, run)
+          task_id += 1
+    return branches
+
+  def output(self):
+    point_id, point, era, run = self.branch_data
+    file_name_prefix = 'l1Tuple'
+    file_name = f'{file_name_prefix}_{run}.root'
+    root_file = os.path.join(self.prod_setup['output_storage_l1'], era, point['prod_card'].name, file_name)
+    return law.LocalFileTarget(root_file)
+
+  def run(self):
+    point_id, point, era, run = self.branch_data
+    print(f"Running l1 tuple production {point['prod_card'].name} era={era} run={run}...")
+    cond_path = self.to_abs(self.prod_setup['cond_config'])
+    step = 'HLT'
+    n_evt = point['events_per_run']
+
+    step_index = prod_steps.index(step)
+    prev_step = prod_steps[step_index - 1]
+    file_name_prefix = step_to_file_name[prev_step]
+    file_name = f'{file_name_prefix}_{run}.root'
+    prev_root_file = os.path.join(self.prod_setup['output_storage'], era, point['prod_card'].name, file_name)
+    if not os.path.exists(prev_root_file):
+      raise RuntimeError(f"The results from the previous steps are not found in {prev_root_file}.")
+
+    work_dir, work_dir_is_tmp = self.law_job_home()
+    work_dir_hlt = os.path.join(work_dir, 'hlt')
+    os.makedirs(work_dir_hlt, exist_ok=True)
+    step_params, cmssw_env = run_prod(None, None, cond_path, era, step, step, run, n_evt, work_dir,
+                                      prev_root_file, work_dir_hlt, remove_outputs=True)
+    cmssw = step_params[step]['CMSSW']
+    output_hlt = os.path.join(work_dir, f'{step_to_file_name[step]}_{run}.root')
+    mk_l1tuple(output_hlt, self.output().path, work_dir, self.to_abs(self.prod_setup['l1_config']),
+               env=cmssw_env[cmssw], verbose=1)
     if work_dir_is_tmp:
       shutil.rmtree(work_dir)
