@@ -29,13 +29,14 @@ do_install_cmssw() {
     run_cmd scramv1 project CMSSW $CMSSW_VER
     run_cmd cd $CMSSW_VER/src
     run_cmd eval `scramv1 runtime -sh`
-    if [ "$CMSSW_VER" = "CMSSW_12_4_8" ]; then
-      # run_cmd git cms-init
-      # run_cmd git remote add cms-l1t-offline git@github.com:cms-l1t-offline/cmssw.git
-      # run_cmd git fetch cms-l1t-offline l1t-integration-CMSSW_12_4_0
-      # run_cmd git cms-merge-topic -u cms-l1t-offline:l1t-integration-v134
-      # run_cmd git clone https://github.com/cms-l1t-offline/L1Trigger-L1TCalorimeter.git L1Trigger/L1TCalorimeter/data
-      # run_cmd git cms-checkdeps -A -a
+    if [ "$CMSSW_VER" = "CMSSW_12_4_10" ]; then
+      run_cmd git cms-init
+      run_cmd git cms-merge-topic cms-hnl:HNL_base_12_4_X
+      run_cmd git remote add cms-l1t-offline git@github.com:cms-l1t-offline/cmssw.git
+      run_cmd git fetch cms-l1t-offline l1t-integration-CMSSW_12_4_0
+      run_cmd git cms-merge-topic -u cms-l1t-offline:l1t-integration-v134
+      run_cmd git clone https://github.com/cms-l1t-offline/L1Trigger-L1TCalorimeter.git L1Trigger/L1TCalorimeter/data
+      run_cmd git cms-checkdeps -A -a
       run_cmd mkdir -p "HNLTauPrompt/NanoProd"
       run_cmd ln -s "$this_dir/HNLTauPrompt/NanoProd" "HNLTauPrompt/NanoProd/python"
       run_cmd ln -s "$this_dir/HNL" "HNL"
@@ -83,16 +84,16 @@ action() {
     run_cmd install_cmssw slc7_amd64_gcc630 CMSSW_9_4_16_UL 7 hlt
     run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_2_20_UL 7 hlt
     run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
-    run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_8 7 gen
+    run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_10 7 gen
   elif [ $os_version = "8" ]; then
-    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_8 8 nano_prod
+    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_10 8 nano_prod
   else
     echo "Unsupported OS version $os_version"
     kill -INT $$
   fi
 
   if [ "x$mode" = "xnano_prod" ] ; then
-    local cmssw_ver=CMSSW_12_4_8
+    local cmssw_ver=CMSSW_12_4_10
     run_cmd cd "$this_dir/soft/CentOS$os_version/$cmssw_ver"
     run_cmd eval `scramv1 runtime -sh`
     export PATH="$PATH:$this_dir/soft/CentOS$os_version/$cmssw_ver/bin_ext"
