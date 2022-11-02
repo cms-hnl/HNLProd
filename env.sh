@@ -75,6 +75,7 @@ action() {
   export ANALYSIS_PATH="$this_dir"
   export ANALYSIS_DATA_PATH="$ANALYSIS_PATH/data"
   export X509_USER_PROXY="$ANALYSIS_DATA_PATH/voms.proxy"
+  mkdir -p "$ANALYSIS_DATA_PATH"
 
   export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts
 
