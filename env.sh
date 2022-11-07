@@ -32,10 +32,10 @@ do_install_cmssw() {
     if [ "$CMSSW_VER" = "CMSSW_12_4_10" ]; then
       run_cmd git cms-init
       run_cmd git cms-merge-topic cms-hnl:HNL_base_12_4_X
-      run_cmd git remote add cms-l1t-offline git@github.com:cms-l1t-offline/cmssw.git
-      run_cmd git fetch cms-l1t-offline l1t-integration-CMSSW_12_4_0
-      run_cmd git cms-merge-topic -u cms-l1t-offline:l1t-integration-v134
-      run_cmd git clone https://github.com/cms-l1t-offline/L1Trigger-L1TCalorimeter.git L1Trigger/L1TCalorimeter/data
+      # run_cmd git remote add cms-l1t-offline git@github.com:cms-l1t-offline/cmssw.git
+      # run_cmd git fetch cms-l1t-offline l1t-integration-CMSSW_12_4_0
+      # run_cmd git cms-merge-topic -u cms-l1t-offline:l1t-integration-v134
+      # run_cmd git clone https://github.com/cms-l1t-offline/L1Trigger-L1TCalorimeter.git L1Trigger/L1TCalorimeter/data
       run_cmd git cms-checkdeps -A -a
       run_cmd mkdir -p "HNLTauPrompt/NanoProd"
       run_cmd ln -s "$this_dir/HNLTauPrompt/NanoProd" "HNLTauPrompt/NanoProd/python"
