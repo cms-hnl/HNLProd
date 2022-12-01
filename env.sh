@@ -92,12 +92,13 @@ action() {
     echo "Unsupported OS version $os_version"
     kill -INT $$
   fi
+  local default_cmssw_ver=CMSSW_12_4_10
+  export DEFAULT_CMSSW_HOME="$ANALYSIS_PATH/soft/CentOS$os_version/$default_cmssw_ver"
 
   if [ "x$mode" = "xnano_prod" ] ; then
-    local cmssw_ver=CMSSW_12_4_10
-    run_cmd cd "$this_dir/soft/CentOS$os_version/$cmssw_ver"
+    run_cmd cd "$DEFAULT_CMSSW_HOME"
     run_cmd eval `scramv1 runtime -sh`
-    export PATH="$PATH:$this_dir/soft/CentOS$os_version/$cmssw_ver/bin_ext"
+    export PATH="$PATH:$DEFAULT_CMSSW_HOME/bin_ext"
     autoload bashcompinit
     bashcompinit
     source /cvmfs/cms.cern.ch/common/crab-setup.sh prod

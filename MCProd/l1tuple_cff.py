@@ -8,7 +8,7 @@ import FWCore.ParameterSet.Config as cms
 from Configuration.Eras.Era_Run3_cff import Run3
 import FWCore.ParameterSet.VarParsing as VarParsing
 
-process = cms.Process('RAW2DIGI',Run3)
+process = cms.Process('RAW2DIGI', Run3)
 
 options = VarParsing.VarParsing ('analysis')
 options.register('outL1', 'l1.root', VarParsing.VarParsing.multiplicity.singleton,
@@ -124,7 +124,7 @@ def customiseGenParticles(process):
     '+keep statusFlags().isFirstCopy() && ' + leptons,
     'keep+ statusFlags().isLastCopy() && ' + important_particles,
     '+keep statusFlags().isFirstCopy() && ' + important_particles,
-    "drop abs(pdgId)= 2212 && abs(pz) > 1000", #drop LHC protons accidentally added by previous keeps
+    "drop abs(pdgId) == 2212 && abs(pz) > 1000", #drop LHC protons accidentally added by previous keeps
   ]
 
   from PhysicsTools.NanoAOD.common_cff import Var
