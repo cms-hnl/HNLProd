@@ -30,3 +30,17 @@ generator = cms.EDFilter("Pythia8HadronizerFilter",
                                     )
     )
 )
+
+leptonFilter = cms.EDFilter("MCMultiParticleFilter",
+    NumRequired = cms.int32(3),
+    AcceptMore = cms.bool(True),
+    ParticleID = cms.vint32(11, 13, 11, 13),
+    PtMin = cms.vdouble([0.] * 4),
+    EtaMax = cms.vdouble([999.] * 4),
+    Status = cms.vint32(1, 1, 23, 23),
+    MaxDecayRadius = cms.untracked.vdouble([800.] * 4),
+    MaxDecayZ = cms.untracked.vdouble([1200.] * 4),
+)
+
+ProductionFilterSequence = cms.Sequence(generator * leptonFilter)
+

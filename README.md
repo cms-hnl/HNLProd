@@ -4,7 +4,8 @@ Tools to run a private MC production
 ## How to run MC production
 
 Central HNL LO cards:
-https://github.com/cms-sw/genproductions/tree/e3bf0a9b8180b78938a34e4d06036d5dd096d8ef/bin/MadGraph5_aMCatNLO/cards/production/2017/13TeV/exo_heavyNeutrino_LO
+- pre-UL https://github.com/cms-sw/genproductions/tree/e3bf0a9b8180b78938a34e4d06036d5dd096d8ef/bin/MadGraph5_aMCatNLO/cards/production/2017/13TeV/exo_heavyNeutrino_LO
+- UL https://github.com/cms-sw/genproductions/tree/master/bin/MadGraph5_aMCatNLO/cards/production/13TeV/HeavyNeutrino_trilepton_V-0p01_tau_NLO
 
 Update yaml config with relevant setup (output paths, couplings, masses, number of events etc.) and then run `RunProd` task.
 ```shell

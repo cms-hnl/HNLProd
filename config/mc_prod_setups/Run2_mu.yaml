@@ -6,7 +6,7 @@ cond_config: config/conditions_Run2.yaml
 last_step: MINIAOD
 eras:
   - Run2_2018
-gen_fragment: MCProd/gen_fragment.py
+gen_fragment: MCProd/gen_fragment_emu.py
 default:
   type: majorana
   e_mixing: 0
