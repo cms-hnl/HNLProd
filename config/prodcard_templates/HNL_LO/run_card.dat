@@ -81,6 +81,7 @@
 # Cuts on the charged leptons (e+, e-, mu+, mu-, tau+ and tau-)        *
 # (more specific gen cuts can be specified in SubProcesses/cuts.f)     *
 #***********************************************************************
+  18.0 = ptl1min  ! minimum pt for the leading lepton in pt
   0.0	 = ptl      ! Min lepton transverse momentum
   -1.0 = etal     ! Max lepton abs(pseudo-rap) (a value .lt.0 means no cut)
   0.00 = drll     ! Min distance between opposite sign lepton pairs

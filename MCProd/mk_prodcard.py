@@ -27,7 +27,7 @@ class ProdCard:
     if mass <= 0:
       raise RuntimeError(f'HNL mass should be a positive number')
 
-    self.name = f'HeavyNeutrino_trilepton_M-{mass}'
+    self.name = f'HeavyNeutrino_trilepton_M-{self.mass}'
     self.mixings = OrderedDict([ ('e', e_mixing), ('mu', mu_mixing), ('tau', tau_mixing)])
     self.positive_mixings = []
     for mix_type, mix_value in self.mixings.items():
