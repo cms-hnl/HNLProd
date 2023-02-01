@@ -10,7 +10,7 @@ default_step:
   LHEGEN:
     eventcontent: RAWSIM,LHE
     datatier: GEN,LHE
-    step: LHE,GEN:ProductionFilterSequence
+    step: LHE,GEN
     runUnscheduled: False
   SIM:
     eventcontent: RAWSIM
