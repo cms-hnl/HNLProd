@@ -1,7 +1,7 @@
 prodcard_templates: config/prodcard_templates/HNL_LO
-prodcard_storage: /eos/home-k/kandroso/cms-hnl/prodcards/13TeV
-gridpack_storage: /eos/home-k/kandroso/cms-hnl/gridpacks/13TeV
-output_storage: /eos/home-k/kandroso/cms-hnl/Run2/MINIAOD
+prodcard_storage: /eos/user/a/amascell/HNL/prodcards
+gridpack_storage: /eos/user/a/amascell/HNL/gridpacks
+output_storage: /eos/user/a/amascell/HNL/output
 cond_config: config/conditions_Run2.yaml
 last_step: MINIAOD
 eras:
@@ -15,14 +15,15 @@ default:
   events_per_run: 2000
 points:
   - mass: 1
-    mu_mixing: 0.012
+    mu_mixing: 0.112
   - mass: 2
-    mu_mixing: 0.004
+    mu_mixing: 0.0135
   - mass: 3
-    mu_mixing: 0.0022
+    mu_mixing: 0.00379
   - mass: 4
-    mu_mixing: 0.0015
+    mu_mixing: 0.00151
   - mass: 5
-    mu_mixing: 0.0011
+    mu_mixing: 0.000746
   - mass: 6
-    mu_mixing: 0.0009
+    mu_mixing: 0.000420
+    
