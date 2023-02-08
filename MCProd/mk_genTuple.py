@@ -4,7 +4,7 @@ import shutil
 from RunKit.sh_tools import sh_call
 from RunKit.envToJson import get_cmsenv
 
-def mk_genTuple(input, output, config, cmssw, verbose):
+def mk_genTuple(input, output, source, config, cmssw, verbose):
   if verbose > 0:
     print(f'Processing "{input}" into {output}')
   input_files = glob.glob(input)
@@ -17,7 +17,8 @@ def mk_genTuple(input, output, config, cmssw, verbose):
     os.remove(output)
   out_tmp = output + '.tmp.root'
   env = get_cmsenv(cmssw)
-  sh_call(['cmsRun', config, f'inputFiles={input_str}', f'output={out_tmp}'], env=env, verbose=verbose)
+  sh_call(['cmsRun', config, f'inputFiles={input_str}', f'output={out_tmp}', f'source={source}'],
+          env=env, verbose=verbose)
   shutil.move(out_tmp, output)
   print(f'GenTuple "{output}" successfully created.')
 
@@ -26,6 +27,8 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Create l1Tuples adding generator level info.')
   parser.add_argument('--input', required=True, type=str, help="input file or glob pattern")
   parser.add_argument('--output', required=True, type=str, help="output file")
+  parser.add_argument('--source', required=False, type=str, default="genParticles",
+                      help="collection of generated partilces. E.g. genParticles, prunedGenParticles etc.")
   parser.add_argument('--config', required=False, type=str,
                       default=os.path.join(os.environ['ANALYSIS_PATH'], 'MCProd', 'gentuple_cff.py'),
                       help="python file with CMSSW configuration")
@@ -34,4 +37,4 @@ if __name__ == "__main__":
   parser.add_argument('--verbose', required=False, type=int, default=1, help="verbosity level")
   args = parser.parse_args()
 
-  mk_genTuple(args.input, args.output, args.config, args.cmssw, args.verbose)
+  mk_genTuple(args.input, args.output, args.source, args.config, args.cmssw, args.verbose)
