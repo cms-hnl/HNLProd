@@ -40,6 +40,7 @@ leptonFilter = cms.EDFilter("MCMultiParticleFilter",
     Status = cms.vint32([1] * 2),
     MinDecayRadius = cms.untracked.vdouble([25.] * 2), # in mm
     MaxDecayRadius = cms.untracked.vdouble([8000.] * 2), # in mm
+    MinDecayZ = cms.untracked.vdouble([-12000.] * 2), # in mm
     MaxDecayZ = cms.untracked.vdouble([12000.] * 2), # in mm
 )
 
