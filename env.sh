@@ -29,7 +29,7 @@ do_install_cmssw() {
     run_cmd scramv1 project CMSSW $CMSSW_VER
     run_cmd cd $CMSSW_VER/src
     run_cmd eval `scramv1 runtime -sh`
-    if [ "$CMSSW_VER" = "CMSSW_12_4_10" ]; then
+    if [ "$inst_type" = "nano_prod" ]; then
       run_cmd git cms-init
       run_cmd git cms-merge-topic cms-hnl:HNL_base_12_4_X
       # run_cmd git remote add cms-l1t-offline git@github.com:cms-l1t-offline/cmssw.git
@@ -57,8 +57,13 @@ install_cmssw() {
   local cmssw_version=$2
   local os_version=$3
   local inst_type=$4
+  if [[ $os_version < 8 ]] ; then
+    local env_cmd=cmssw-cc$os_version
+  else
+    local env_cmd=cmssw-el$os_version
+  fi
   if ! [ -f "$this_dir/soft/CentOS$os_version/$CMSSW_VER/.installed" ]; then
-    run_cmd /usr/bin/env -i HOME=$HOME bash "$this_file" install_cmssw $scram_arch $cmssw_version $os_version $inst_type
+    run_cmd $env_cmd --command-to-run /usr/bin/env -i HOME=$HOME bash "$this_file" install_cmssw $scram_arch $cmssw_version $os_version $inst_type
   fi
 }
 
@@ -79,36 +84,26 @@ action() {
 
   export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts
 
-  local os_version=$(cat /etc/os-release | grep VERSION_ID | sed -E 's/VERSION_ID="([0-9]+)"/\1/')
-  if [ $os_version = "7" ]; then
-    run_cmd install_cmssw slc7_amd64_gcc530 CMSSW_8_0_36_UL_patch1 7 hlt
-    run_cmd install_cmssw slc7_amd64_gcc630 CMSSW_9_4_16_UL 7 hlt
-    run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_2_20_UL 7 hlt
-    run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
-    run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_10 7 gen
-  elif [ $os_version = "8" ]; then
-    run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_10 8 nano_prod
-  else
-    echo "Unsupported OS version $os_version"
-    kill -INT $$
-  fi
-  local default_cmssw_ver=CMSSW_12_4_10
-  export DEFAULT_CMSSW_HOME="$ANALYSIS_PATH/soft/CentOS$os_version/$default_cmssw_ver"
+  run_cmd install_cmssw slc7_amd64_gcc530 CMSSW_8_0_36_UL_patch1 7 hlt
+  run_cmd install_cmssw slc7_amd64_gcc630 CMSSW_9_4_16_UL 7 hlt
+  run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_2_20_UL 7 hlt
+  run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
+  run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_10 7 nano_prod
+  run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_10 8 nano_prod
 
-  if [ "x$mode" = "xnano_prod" ] ; then
-    run_cmd cd "$DEFAULT_CMSSW_HOME"
-    run_cmd eval `scramv1 runtime -sh`
-    export PATH="$PATH:$DEFAULT_CMSSW_HOME/bin_ext"
+  local os_version=$(cat /etc/os-release | grep VERSION_ID | sed -E 's/VERSION_ID="([0-9]+)"/\1/')
+  local default_cmssw_ver=CMSSW_12_4_10
+  export DEFAULT_CMSSW_BASE="$ANALYSIS_PATH/soft/CentOS$os_version/$default_cmssw_ver"
+
+  if [ ! -z $ZSH_VERSION ]; then
     autoload bashcompinit
     bashcompinit
-    source /cvmfs/cms.cern.ch/common/crab-setup.sh prod
-    run_cmd cd "$this_dir"
-  else
-    source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_101 x86_64-centos${os_version}-gcc8-opt
   fi
+  source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_102 x86_64-centos${os_version}-gcc11-opt
   source /afs/cern.ch/user/m/mrieger/public/law_sw/setup.sh
 
   source "$( law completion )" ""
+  alias cmsEnv="env -i HOME=$HOME ANALYSIS_PATH=$ANALYSIS_PATH X509_USER_PROXY=$X509_USER_PROXY DEFAULT_CMSSW_BASE=$DEFAULT_CMSSW_BASE $ANALYSIS_PATH/RunKit/cmsEnv.sh"
 }
 
 if [ "X$1" = "Xinstall_cmssw" ]; then

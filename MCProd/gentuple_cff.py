@@ -5,6 +5,9 @@ options = VarParsing.VarParsing ('analysis')
 options.register('output', 'gen.root', VarParsing.VarParsing.multiplicity.singleton,
                  VarParsing.VarParsing.varType.string,
                  'Output file with gen particles')
+options.register('source', 'genParticles', VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 'collection of generated partilces. E.g. genParticles, prunedGenParticles etc.')
 options.parseArguments()
 
 def customiseGenParticles(process):
@@ -64,7 +67,7 @@ process.endjob_step = cms.EndPath(process.endOfProcess)
 process.nanoTableTaskFS = cms.Task(process.genParticleTablesTask, process.genParticleTask)
 process.nanoSequenceFS = cms.Sequence(process.nanoTableTaskFS)
 process.nanoSequenceMC = cms.Sequence(process.nanoTableTaskFS)
-process.finalGenParticles.src = cms.InputTag("genParticles")
+process.finalGenParticles.src = cms.InputTag(options.source)
 process.NANOAODSIMoutput.outputCommands = cms.untracked.vstring(
   'drop *',
   'keep nanoaodFlatTable_*Table_*_*',
