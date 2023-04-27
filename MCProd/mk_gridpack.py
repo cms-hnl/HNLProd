@@ -25,7 +25,7 @@ def find_gridpack(path, prod_card_name):
   return tarballs[0]
 
 
-def mk_gridpack(prodcard_dir, central_output_dir):
+def mk_gridpack(prodcard_dir, central_output_dir, gen_era):
   ana_path = os.environ['ANALYSIS_PATH']
   gen_path = os.path.join(ana_path, 'genproductions', 'bin', 'MadGraph5_aMCatNLO')
   params = 'params.json'
@@ -42,7 +42,10 @@ def mk_gridpack(prodcard_dir, central_output_dir):
 
   rm_files()
 
-  cmd = f'./gridpack_generation.sh "{prod_card.name}" "{os.path.relpath(prodcard_dir, start=gen_path)}"'
+  cmd = f'./gridpack_generation.sh "{prod_card.name}" "{os.path.relpath(prodcard_dir, start=gen_path)}" "{gen_era}"'
+  run_singularity = os.environ['OS_VERSION'] != 'CentOS7'
+  if run_singularity:
+    cmd = f'/cvmfs/cms.cern.ch/common/cmssw-cc7 --command-to-run bash ' + cmd
   sh_call([cmd], shell=True, cwd=gen_path, env={}, verbose=1)
 
   run_log = prod_card.name + '.log'
@@ -63,6 +66,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Create HNL gridpack.')
   parser.add_argument('--prodcard', required=True, type=str, help="path to prodcard")
   parser.add_argument('--output', required=True, type=str, help="output path with all gridpacks are stored")
+  parser.add_argument('--gen-era', required=True, type=str, help="gen era: 2017 or run3")
   args = parser.parse_args()
 
-  mk_gridpack(args.prodcard, args.output)
+  mk_gridpack(args.prodcard, args.output, args.gen_era)

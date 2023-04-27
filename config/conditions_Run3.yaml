@@ -1,0 +1,85 @@
+default:
+  OS_VERSION: CentOS8
+  SCRAM_ARCH: el8_amd64_gcc10
+  comEnergy: 13600
+  geometry: DB:Extended
+  era: Run3
+  customise:
+    - Configuration/DataProcessing/Utils.addMonitoring
+
+default_step:
+  LHEGS:
+    eventcontent: RAWSIM,LHE
+    datatier: GEN-SIM,LHE
+    step: LHE,GEN,SIM
+    beamspot: Realistic25ns13p6TeVEarly2022Collision
+  DIGIPremixHLT:
+    datatier: GEN-SIM-RAW
+  RECO:
+    eventcontent: AODSIM
+    datatier: AODSIM
+    step: RAW2DIGI,L1Reco,RECO,RECOSIM
+    procModifiers: siPixelQualityRawToDigi
+  MINIAOD:
+    eventcontent: MINIAODSIM
+    datatier: MINIAODSIM
+    step: PAT
+
+Run3Summer22:
+  prod_steps: [ LHEGS, DIGIPremixHLT, RECO, MINIAOD ]
+  default:
+    CMSSW: CMSSW_12_4_11_patch3
+    GlobalTag: 124X_mcRun3_2022_realistic_v12
+  DIGIPremixHLT:
+    eventcontent: PREMIXRAW
+    step: DIGI,DATAMIX,L1,DIGI2RAW,HLT:2022v12
+    datamix: PreMix
+    pileup_input: dbs:/Neutrino_E-10_gun/Run3Summer21PrePremix-Summer22_124X_mcRun3_2022_realistic_v11-v2/PREMIX
+    procModifiers: premix_stage2,siPixelQualityRawToDigi
+
+Run3Summer22EE:
+  prod_steps: [ LHEGS, DIGIPremixHLT, RECO, MINIAOD ]
+  default:
+    CMSSW: CMSSW_12_4_11_patch3
+    GlobalTag: 124X_mcRun3_2022_realistic_postEE_v1
+  DIGIPremixHLT:
+    eventcontent: PREMIXRAW
+    step: DIGI,DATAMIX,L1,DIGI2RAW,HLT:2022v14
+    datamix: PreMix
+    pileup_input: dbs:/Neutrino_E-10_gun/Run3Summer21PrePremix-Summer22_124X_mcRun3_2022_realistic_v11-v2/PREMIX
+    procModifiers: premix_stage2,siPixelQualityRawToDigi
+
+Run3Winter23:
+  prod_steps: [ LHEGS, DIGIPremixHLT ]
+  default:
+    CMSSW: CMSSW_12_6_4
+    GlobalTag: 126X_mcRun3_2023_forPU65_v3
+  DIGIPremixHLT:
+    eventcontent: RAWSIM
+    step: DIGI,L1,DIGI2RAW,HLT:2022v15
+    pileup: 2023_LHC_Simulation_12p5h_9h_hybrid2p23
+    pileup_input: dbs:/MinBias_TuneCP5_13p6TeV-pythia8/Run3Winter23GS-126X_mcRun3_2023_forPU65_v1-v1/GEN-SIM
+    customise_commands:
+      - process.hltParticleFlowClusterHBHE.seedFinder.thresholdsByDetector[0].seedingThreshold=[0.6,0.5,0.5,0.5]
+      - process.hltParticleFlowClusterHBHE.initialClusteringStep.thresholdsByDetector[0].gatheringThreshold=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHBHE.pfClusterBuilder.recHitEnergyNorms[0].recHitEnergyNorm=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHBHE.pfClusterBuilder.positionCalc.logWeightDenominatorByDetector[0].logWeightDenominator=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHBHE.pfClusterBuilder.allCellsPositionCalc.logWeightDenominatorByDetector[0].logWeightDenominator=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHCAL.pfClusterBuilder.allCellsPositionCalc.logWeightDenominatorByDetector[0].logWeightDenominator=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowRecHitHBHE.producers[0].qualityTests[0].cuts[0].threshold=[0.4,0.3,0.3,0.3]
+      - process.hltEgammaHoverE.eThresHB=[0.4,0.3,0.3,0.3]
+      - process.hltEgammaHoverEUnseeded.eThresHB=[0.4,0.3,0.3,0.3]
+      - process.hltEgammaHToverET.eThresHB=[0.4,0.3,0.3,0.3]
+      - process.hltFixedGridRhoFastjetECALMFForMuons.eThresHB=[0.4,0.3,0.3,0.3]
+      - process.hltFixedGridRhoFastjetAllCaloForMuons.eThresHB=[0.4,0.3,0.3,0.3]
+      - process.hltFixedGridRhoFastjetHCAL.eThresHB=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHBHECPUOnly.seedFinder.thresholdsByDetector[0].seedingThreshold=[0.6,0.5,0.5,0.5]
+      - process.hltParticleFlowClusterHBHECPUOnly.initialClusteringStep.thresholdsByDetector[0].gatheringThreshold=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHBHECPUOnly.pfClusterBuilder.recHitEnergyNorms[0].recHitEnergyNorm=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHBHECPUOnly.pfClusterBuilder.positionCalc.logWeightDenominatorByDetector[0].logWeightDenominator=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHBHECPUOnly.pfClusterBuilder.allCellsPositionCalc.logWeightDenominatorByDetector[0].logWeightDenominator=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowClusterHCALCPUOnly.pfClusterBuilder.allCellsPositionCalc.logWeightDenominatorByDetector[0].logWeightDenominator=[0.4,0.3,0.3,0.3]
+      - process.hltParticleFlowRecHitHBHECPUOnly.producers[0].qualityTests[0].cuts[0].threshold=[0.4,0.3,0.3,0.3]
+      - process.hltTowerMakerForAll.HBThreshold1=0.4
+      - process.hltTowerMakerForAll.HBThreshold2=0.3
+      - process.hltTowerMakerForAll.HBThreshold=0.3

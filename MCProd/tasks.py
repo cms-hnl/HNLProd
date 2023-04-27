@@ -9,7 +9,7 @@ import tempfile
 import yaml
 from .mk_prodcard import ProdCard, mk_prodcard
 from .mk_gridpack import find_gridpack, mk_gridpack
-from .run_prod import run_prod, step_to_file_name, prod_steps
+from .run_prod import run_prod, step_to_file_name
 from .mk_l1tuple import mk_l1tuple
 from RunKit.grid_helper_tasks import CreateVomsProxy
 from RunKit.sh_tools import timed_call_wrapper, update_kerberos_ticket
@@ -140,7 +140,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
   def htcondor_job_config(self, config, job_num, branches):
     config.render_variables["analysis_path"] = self.ana_path()
-    config.custom_content.append(("requirements", '(OpSysAndVer =?= "CentOS7")'))
+    #config.custom_content.append(("requirements", f'(OpSysAndVer =?= "{os.environ["OS_VERSION"]}")'))
     config.custom_content.append(("+MaxRuntime", int(math.floor(self.max_runtime * 3600)) - 1))
     n_cpus = int(self.n_cpus)
     if n_cpus > 1:
@@ -195,7 +195,7 @@ class MkGridpack(Task, HTCondorWorkflow, law.LocalWorkflow):
     point = self.branch_data
     print(f"Creating gridpack for {point['prod_card'].name}...")
     prodcard_dir = os.path.join(self.prod_setup['prodcard_storage'], point['prod_card'].name)
-    mk_gridpack(prodcard_dir, self.prod_setup['gridpack_storage'])
+    mk_gridpack(prodcard_dir, self.prod_setup['gridpack_storage'], self.prod_setup['gen_era'])
     self.output().touch()
 
 class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
@@ -237,11 +237,22 @@ class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     gridpack_path = os.path.join(gridpack_dir, gridpack_file)
     fragment_path = self.to_abs(self.prod_setup['gen_fragment'])
     cond_path = self.to_abs(self.prod_setup['cond_config'])
-    first_step = self.prod_setup.get('first_step', prod_steps[0])
-    last_step = self.prod_setup['last_step']
+    first_step = self.prod_setup.get('first_step', None)
+    last_step = self.prod_setup.get('last_step', None)
     n_evt = point['events_per_run']
     output_dir, output_file = os.path.split(self.output().path)
-    if first_step != prod_steps[0]:
+    if first_step:
+      with open(cond_path, 'r') as f:
+        conditions = yaml.safe_load(f)
+      if era not in conditions:
+        raise RuntimeError(f"Conditions for {era} not found.")
+      prod_steps = None
+      if 'prod_steps' in conditions[era]:
+        prod_steps = conditions[era]['prod_steps']
+      elif 'prod_steps' in conditions:
+        prod_steps = conditions['prod_steps']
+      if prod_steps is None:
+        raise RuntimeError(f"Production steps for {era} not found.")
       first_step_index = prod_steps.index(first_step)
       prev_step = prod_steps[first_step_index - 1]
       file_name_prefix = step_to_file_name[prev_step]
@@ -295,9 +306,7 @@ class MkL1Tuples(Task, HTCondorWorkflow, law.LocalWorkflow):
     step = 'HLT'
     n_evt = point['events_per_run']
 
-    step_index = prod_steps.index(step)
-    prev_step = prod_steps[step_index - 1]
-    file_name_prefix = step_to_file_name[prev_step]
+    file_name_prefix = 'rawHLT'
     file_name = f'{file_name_prefix}_{run}.root'
     prev_root_file = os.path.join(self.prod_setup['output_storage'], era, point['prod_card'].name, file_name)
     if not os.path.exists(prev_root_file):

@@ -3,6 +3,7 @@ prodcard_storage: /eos/user/a/amascell/HNL/prodcards
 gridpack_storage: /eos/user/a/amascell/HNL/gridpacks
 output_storage: /eos/user/a/amascell/HNL/output
 cond_config: config/conditions_Run2.yaml
+gen_era: 2017
 last_step: MINIAOD
 eras:
   - Run2_2018
@@ -26,4 +27,3 @@ points:
     mu_mixing: 0.000746
   - mass: 6
     mu_mixing: 0.000420
-    

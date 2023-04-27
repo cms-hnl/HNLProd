@@ -4,15 +4,20 @@ import yaml
 from RunKit.envToJson import get_cmsenv
 from RunKit.sh_tools import sh_call
 
-prod_steps = [ "LHEGEN", "SIM", "DIGIPremix", "HLT", "RECO", "MINIAOD" ]
-
 step_to_file_name = {
   "LHEGEN": "gen",
   "SIM": "sim",
+  "LHEGS": "sim",
   "DIGIPremix": "raw",
   "HLT": "rawHLT",
+  "DIGIPremixHLT": "rawHLT",
   "RECO": "reco",
   "MINIAOD": "miniAOD",
+}
+
+singularity_cmds = {
+  'CentOS7': '/cvmfs/cms.cern.ch/common/cmssw-cc7',
+  'CentOS8': '/cvmfs/cms.cern.ch/common/cmssw-el8',
 }
 
 def get_step_params(conditions, era, step):
@@ -33,8 +38,15 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
     conditions = yaml.safe_load(f)
   if era not in conditions:
     raise RuntimeError(f"Conditions for {era} not found.")
-  first_step_index = prod_steps.index(first_step)
-  last_step_index = prod_steps.index(last_step)
+  prod_steps = None
+  if 'prod_steps' in conditions[era]:
+    prod_steps = conditions[era]['prod_steps']
+  elif 'prod_steps' in conditions:
+    prod_steps = conditions['prod_steps']
+  if prod_steps is None:
+    raise RuntimeError(f"Production steps for {era} not found.")
+  first_step_index = prod_steps.index(first_step) if first_step else 0
+  last_step_index = prod_steps.index(last_step) if last_step else len(prod_steps) - 1
 
   os.makedirs(work_dir, exist_ok=True)
   try:
@@ -54,16 +66,30 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
         step_params = get_step_params(conditions, era, step)
         all_step_params[step] = step_params
         cmssw = step_params['CMSSW']
-        cmssw_dir = os.path.join(os.environ['ANALYSIS_PATH'], 'soft', 'CentOS7', cmssw)
-        if cmssw not in cmssw_env:
-          cmssw_env[cmssw] = get_cmsenv(cmssw_dir)
-          cmssw_env[cmssw]['X509_USER_PROXY'] = os.environ['X509_USER_PROXY']
-          cmssw_env[cmssw]['HOME'] = os.environ['HOME'] if 'HOME' in os.environ else work_dir
+        target_os = step_params['OS_VERSION']
+        cmssw_key = (cmssw, target_os)
+        current_os = os.environ['OS_VERSION']
+        sing_cmd = singularity_cmds[target_os] if target_os != current_os else None
+        cmssw_dir = os.path.join(os.environ['ANALYSIS_PATH'], 'soft', target_os, cmssw)
+        if cmssw_key not in cmssw_env:
+          cmssw_env[cmssw_key] = get_cmsenv(cmssw_dir, singularity_cmd=sing_cmd)
+          cmssw_env[cmssw_key]['X509_USER_PROXY'] = os.environ['X509_USER_PROXY']
+          cmssw_env[cmssw_key]['HOME'] = os.environ['HOME'] if 'HOME' in os.environ else work_dir
+          if 'KRB5CCNAME' in os.environ:
+            cmssw_env[cmssw_key]['KRB5CCNAME'] = os.environ['KRB5CCNAME']
         customise_commands = [
           'process.MessageLogger.cerr.FwkReport.reportEvery = 100',
         ]
-        cmd = 'cmsDriver.py'
-        if step == 'LHEGEN':
+        if sing_cmd:
+          env_line = []
+          for key in ['PATH', 'LD_LIBRARY_PATH']:
+            env_line.append(f'{key}="{cmssw_env[cmssw_key][key]}"')
+          env_line = ' '.join(env_line)
+          cmd = f"{sing_cmd} --command-to-run env {env_line} "
+        else:
+          cmd = ''
+        cmd += 'cmsDriver.py'
+        if step in [ 'LHEGEN', 'LHEGS' ]:
           gridpack_path = os.path.abspath(gridpack_path)
           if not os.path.exists(gridpack_path):
             raise RuntimeError(f'gridpack file {gridpack_path} not found.')
@@ -82,7 +108,7 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
             f'process.generator.comEnergy = cms.double({step_params["comEnergy"]})',
           ])
 
-        if step in [ 'LHEGEN', 'SIM' ]:
+        if step in [ 'LHEGEN', 'SIM', 'LHEGS' ]:
           cmd += f' --beamspot {step_params["beamspot"]}'
 
         cmd += f' --python_filename {step}.py --eventcontent {step_params["eventcontent"]}'
@@ -100,6 +126,8 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
             cmd += f' --filein file:{prod_steps[step_index - 1]}.root'
         if 'datamix' in step_params:
           cmd += ' --datamix ' + step_params['datamix']
+        if 'pileup' in step_params:
+          cmd += ' --pileup ' + step_params['pileup']
         if 'pileup_input' in step_params:
           cmd += f' --pileup_input "{step_params["pileup_input"]}"'
         for cmd_type in [ 'inputCommands', 'outputCommand' ]:
@@ -116,7 +144,14 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
         customise_cmd = '\\n'.join(customise_commands)
         cmd += f" --customise_commands '{customise_cmd}'"
 
-        sh_call([cmd], shell=True, env=cmssw_env[cmssw], cwd=work_dir, verbose=1)
+        # env_line = []
+        # for key in ['PATH', 'LD_LIBRARY_PATH']:
+        #   env_line.append(f'{key}="{cmssw_env[cmssw_key][key]}"')
+        # env_line = ' '.join(env_line)
+        # cmd = f"{sing_cmd} --command-to-run env {env_line} "
+        # cmd += 'head /eos/home-k/kandroso/cms-hnl/gridpacks/13.6TeV/HeavyNeutrino_trilepton_M-2_V-0.0135_mu_massiveAndCKM_LO/HeavyNeutrino_trilepton_M-2_V-0.0135_mu_massiveAndCKM_LO_slc7_amd64_gcc700_CMSSW_10_6_19_tarball.tar.xz'
+        sh_call([cmd], shell=True, env=cmssw_env[cmssw_key], cwd=work_dir, verbose=1)
+        # raise RuntimeError('stop')
 
       except:
         if os.path.exists(step_out):
@@ -142,9 +177,8 @@ if __name__ == "__main__":
   parser.add_argument('--fragment', required=True, type=str, help="path to gen fragment")
   parser.add_argument('--cond', required=True, type=str, help="path to yaml with conditions")
   parser.add_argument('--era', required=True, type=str, help="era")
-  parser.add_argument('--first-step', required=False, default="LHEGEN", type=str,
-                      help="first step: " + ', '.join(prod_steps))
-  parser.add_argument('--last-step', required=True, type=str, help="final step: " + ', '.join(prod_steps))
+  parser.add_argument('--first-step', required=False, default=None, type=str, help="first step")
+  parser.add_argument('--last-step', required=False, default=None, type=str, help="final step")
   parser.add_argument('--seed', required=True, type=int, help="random seed")
   parser.add_argument('--n-evt', required=True, type=int, help="number of events to generate")
   parser.add_argument('--output', required=True, type=str, help="path to store output root file")
