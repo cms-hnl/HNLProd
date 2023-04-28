@@ -8,14 +8,14 @@ gen_era: run3
 last_step: DIGIPremixHLT
 eras:
   - Run3Winter23
-gen_fragment: MCProd/gen_fragment.py
+gen_fragment: MCProd/gen_fragment_tau_displ.py
 l1_config: MCProd/l1tuple_cff.py
 default:
   type: majorana
   e_mixing: 0
   mu_mixing: 0
   runs: [ '1-100' ]
-  events_per_run: 2000
+  events_per_run: 5000
 points:
   - mass: 3
     tau_mixing: 0.0276
