@@ -90,12 +90,14 @@ action() {
   run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
   run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_10 7 nano_prod
   run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_10 8 nano_prod
-  run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_6_3 7 gen
-  run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_6_3 8 gen
+  run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_11_patch3 8 gen
+  run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_6_4 8 gen
 
   local os_version=$(cat /etc/os-release | grep VERSION_ID | sed -E 's/VERSION_ID="([0-9]+).*"/\1/')
   local default_cmssw_ver=CMSSW_12_4_10
-  export DEFAULT_CMSSW_BASE="$ANALYSIS_PATH/soft/CentOS$os_version/$default_cmssw_ver"
+  export OS_VERSION=CentOS$os_version
+  export DEFAULT_CMSSW_BASE="$ANALYSIS_PATH/soft/$OS_VERSION/$default_cmssw_ver"
+
 
   if [ ! -z $ZSH_VERSION ]; then
     autoload bashcompinit

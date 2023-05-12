@@ -3,19 +3,19 @@ prodcard_storage: /eos/home-k/kandroso/cms-hnl/prodcards/13.6TeV
 gridpack_storage: /eos/home-k/kandroso/cms-hnl/gridpacks/13.6TeV
 output_storage: /eos/cms/store/group/phys_tau/kandroso/Run3_HLT/RAW
 output_storage_l1: /eos/cms/store/group/phys_tau/kandroso/Run3_HLT/L1
-cond_config: config/conditions_Run3HLT.yaml
-first_step: LHEGEN
-last_step: DIGIPremix
+cond_config: config/conditions_Run3.yaml
+gen_era: run3
+last_step: DIGIPremixHLT
 eras:
-  - Run3_Sep22
-gen_fragment: MCProd/gen_fragment.py
+  - Run3Winter23
+gen_fragment: MCProd/gen_fragment_tau_displ.py
 l1_config: MCProd/l1tuple_cff.py
 default:
   type: majorana
   e_mixing: 0
   mu_mixing: 0
   runs: [ '1-100' ]
-  events_per_run: 2000
+  events_per_run: 5000
 points:
   - mass: 3
     tau_mixing: 0.0276
