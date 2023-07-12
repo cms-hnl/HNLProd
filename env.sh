@@ -31,7 +31,7 @@ do_install_cmssw() {
     run_cmd eval `scramv1 runtime -sh`
     if [ "$inst_type" = "nano_prod" ]; then
       run_cmd git cms-init
-      run_cmd git cms-merge-topic cms-hnl:HNL_base_12_4_X
+      run_cmd git cms-merge-topic cms-hnl:HNL_base_13_0_X
       # run_cmd git remote add cms-l1t-offline git@github.com:cms-l1t-offline/cmssw.git
       # run_cmd git fetch cms-l1t-offline l1t-integration-CMSSW_12_4_0
       # run_cmd git cms-merge-topic -u cms-l1t-offline:l1t-integration-v134
@@ -88,13 +88,13 @@ action() {
   run_cmd install_cmssw slc7_amd64_gcc630 CMSSW_9_4_16_UL 7 hlt
   run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_2_20_UL 7 hlt
   run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
-  run_cmd install_cmssw slc7_amd64_gcc10 CMSSW_12_4_10 7 nano_prod
-  run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_10 8 nano_prod
+  run_cmd install_cmssw slc7_amd64_gcc11 CMSSW_13_0_7 7 nano_prod
+  run_cmd install_cmssw el8_amd64_gcc11 CMSSW_13_0_7 8 nano_prod
   run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_11_patch3 8 gen
   run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_6_4 8 gen
 
   local os_version=$(cat /etc/os-release | grep VERSION_ID | sed -E 's/VERSION_ID="([0-9]+).*"/\1/')
-  local default_cmssw_ver=CMSSW_12_4_10
+  local default_cmssw_ver=CMSSW_13_0_7
   export OS_VERSION=CentOS$os_version
   export DEFAULT_CMSSW_BASE="$ANALYSIS_PATH/soft/$OS_VERSION/$default_cmssw_ver"
 
