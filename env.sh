@@ -38,7 +38,7 @@ do_install_cmssw() {
       # run_cmd git clone https://github.com/cms-l1t-offline/L1Trigger-L1TCalorimeter.git L1Trigger/L1TCalorimeter/data
       run_cmd git cms-checkdeps -A -a
       run_cmd mkdir -p "HNLTauPrompt/NanoProd"
-      run_cmd ln -s "$this_dir/HNLTauPrompt/NanoProd" "HNLTauPrompt/NanoProd/python"
+      # run_cmd ln -s "$this_dir/HNLTauPrompt/NanoProd" "HNLTauPrompt/NanoProd/python"
       run_cmd ln -s "$this_dir/HNL" "HNL"
     fi
     run_cmd mkdir -p "Configuration/GenProduction/python"
