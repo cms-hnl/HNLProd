@@ -15,15 +15,31 @@ default:
   runs: [ '1-100' ]
   events_per_run: 2000
 points:
-  - mass: 1
-    mu_mixing: 0.112
-  - mass: 2
-    mu_mixing: 0.0135
-  - mass: 3
-    mu_mixing: 0.00379
-  - mass: 4
-    mu_mixing: 0.00151
-  - mass: 5
-    mu_mixing: 0.000746
-  - mass: 6
-    mu_mixing: 0.000420
+  # - mass: 1
+  #   mu_mixing: 0.112
+  # - mass: 2
+  #   mu_mixing: 0.0135
+  # - mass: 3
+  #   mu_mixing: 0.00379
+  # - mass: 4
+  #   mu_mixing: 0.00151
+  # - mass: 5
+  #   mu_mixing: 0.000746
+  # - mass: 6
+  #   mu_mixing: 0.000420
+  - mass: 0.5
+    mu_mixing: 0.864
+  - mass: 1.5
+    mu_mixing: 0.0320
+  - mass: 2.5
+    mu_mixing: 0.006910
+  - mass: 3.5
+    mu_mixing: 0.00252
+  - mass: 4.2
+    mu_mixing: 0.00146
+  - mass: 4.4
+    mu_mixing: 0.00127
+  - mass: 4.6
+    mu_mixing: 0.001110
+  - mass: 4.8
+    mu_mixing: 0.000976

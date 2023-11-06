@@ -3,17 +3,35 @@ prodcard_storage: /eos/user/a/amascell/HNL/prodcards
 gridpack_storage: /eos/user/a/amascell/HNL/gridpacks
 output_storage: /eos/user/a/amascell/HNL/output
 cond_config: config/conditions_Run2.yaml
+gen_era: 2017
 last_step: MINIAOD
 eras:
   - Run2_2018
 gen_fragment: MCProd/gen_fragment_emu.py
 default:
   type: majorana
-  e_mixing: 0
   tau_mixing: 0
   runs: [ '1-100' ]
   events_per_run: 2000
 points:
+  - mass: 1
+    mu_mixing: 0.112
+    e_mixing: 0
+  - mass: 2
+    mu_mixing: 0.0135
+    e_mixing: 0
+  - mass: 3
+    mu_mixing: 0.00379
+    e_mixing: 0
+  - mass: 4
+    mu_mixing: 0.00151
+    e_mixing: 0
+  - mass: 5
+    mu_mixing: 0.000746
+    e_mixing: 0
+  - mass: 6
+    mu_mixing: 0.000420
+    e_mixing: 0
   - mass: 1
     mu_mixing: 0.0794
     e_mixing: 0.0794
