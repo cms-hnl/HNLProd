@@ -89,12 +89,12 @@ action() {
   run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_2_20_UL 7 hlt
   run_cmd install_cmssw slc7_amd64_gcc700 CMSSW_10_6_29 7 gen
   run_cmd install_cmssw slc7_amd64_gcc11 CMSSW_13_0_7 7 nano_prod
-  run_cmd install_cmssw el8_amd64_gcc11 CMSSW_13_0_7 8 nano_prod
+  run_cmd install_cmssw el8_amd64_gcc11 CMSSW_13_0_13 8 nano_prod
   run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_4_11_patch3 8 gen
   run_cmd install_cmssw el8_amd64_gcc10 CMSSW_12_6_4 8 gen
 
   local os_version=$(cat /etc/os-release | grep VERSION_ID | sed -E 's/VERSION_ID="([0-9]+).*"/\1/')
-  local default_cmssw_ver=CMSSW_13_0_7
+  local default_cmssw_ver=CMSSW_13_0_13
   export OS_VERSION=CentOS$os_version
   export DEFAULT_CMSSW_BASE="$ANALYSIS_PATH/soft/$OS_VERSION/$default_cmssw_ver"
 
