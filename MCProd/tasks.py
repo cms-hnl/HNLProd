@@ -140,7 +140,7 @@ class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
 
   def htcondor_job_config(self, config, job_num, branches):
     config.render_variables["analysis_path"] = self.ana_path()
-    #config.custom_content.append(("requirements", f'(OpSysAndVer =?= "{os.environ["OS_VERSION"]}")'))
+    config.custom_content.append(("requirements", f'(TARGET.OpSysAndVer =?= "AlmaLinux9")'))
     config.custom_content.append(("+MaxRuntime", int(math.floor(self.max_runtime * 3600)) - 1))
     n_cpus = int(self.n_cpus)
     if n_cpus > 1:
