@@ -1,7 +1,7 @@
 import os
 import re
 import shutil
-from RunKit.sh_tools import sh_call
+from RunKit.run_tools import ps_call
 
 def mk_l1tuple(file_in, file_out, work_dir, config, env=None, verbose=1):
   if verbose > 0:
@@ -11,9 +11,9 @@ def mk_l1tuple(file_in, file_out, work_dir, config, env=None, verbose=1):
   tuple_only = os.path.join(work_dir, out_filename + '.A.root')
   gen_only = os.path.join(work_dir, out_filename + '.B.root')
   out_tmp = os.path.join(work_dir, out_filename + '.hadd.root')
-  sh_call(['cmsRun', config, f'inputFiles=file:{file_in}', f'outL1={tuple_only}',
+  ps_call(['cmsRun', config, f'inputFiles=file:{file_in}', f'outL1={tuple_only}',
            f'outGen={gen_only}'], cwd=work_dir, env=env, verbose=verbose)
-  sh_call(['hadd', '-ff', out_tmp, tuple_only, gen_only], verbose=1)
+  ps_call(['hadd', '-ff', out_tmp, tuple_only, gen_only], verbose=1)
   shutil.move(out_tmp, file_out)
   os.remove(tuple_only)
   os.remove(gen_only)

@@ -69,6 +69,7 @@ install_cmssw() {
 
 action() {
   # determine the directory of this file
+  echo "hello from env.sh"
   local mode=$1
   local this_file="$( [ ! -z "$ZSH_VERSION" ] && echo "${(%):-%x}" || echo "${BASH_SOURCE[0]}" )"
   local this_dir="$( cd "$( dirname "$this_file" )" && pwd )"
@@ -82,7 +83,7 @@ action() {
   export X509_USER_PROXY="$ANALYSIS_DATA_PATH/voms.proxy"
   mkdir -p "$ANALYSIS_DATA_PATH"
 
-  export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts
+  # export PATH=$PATH:$HOME/.local/bin:$ANALYSIS_PATH/scripts
 
   run_cmd install_cmssw slc7_amd64_gcc530 CMSSW_8_0_36_UL_patch1 7 hlt
   run_cmd install_cmssw slc7_amd64_gcc630 CMSSW_9_4_16_UL 7 hlt
@@ -103,11 +104,25 @@ action() {
     autoload bashcompinit
     bashcompinit
   fi
-  source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_102 x86_64-centos${os_version}-gcc11-opt
+  # source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_102 x86_64-centos${os_version}-gcc11-opt
+  alias python=python3
+  echo "before source law"
+  echo "PATH=$PATH"
   source /afs/cern.ch/user/m/mrieger/public/law_sw/setup.sh
+  export PATH=$ANALYSIS_PATH/scripts:$PATH
+  mkdir -p $ANALYSIS_PATH/scripts
+  ln -s /usr/bin/python3 $ANALYSIS_PATH/scripts/python
+  echo "after source law"
+  echo "PATH=$PATH"
+  which law
+  echo "which python"
+  which python
+  echo "which python3"
+  which python3
 
-  source "$( law completion )" ""
+  source "$( law3 completion )" ""
   alias cmsEnv="env -i HOME=$HOME ANALYSIS_PATH=$ANALYSIS_PATH X509_USER_PROXY=$X509_USER_PROXY DEFAULT_CMSSW_BASE=$DEFAULT_CMSSW_BASE $ANALYSIS_PATH/RunKit/cmsEnv.sh"
+  echo "env.sh done!"
 }
 
 if [ "X$1" = "Xinstall_cmssw" ]; then

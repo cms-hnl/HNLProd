@@ -12,9 +12,13 @@ from .mk_gridpack import find_gridpack, mk_gridpack
 from .run_prod import run_prod, step_to_file_name
 from .mk_l1tuple import mk_l1tuple
 from RunKit.grid_helper_tasks import CreateVomsProxy
-from RunKit.sh_tools import timed_call_wrapper, update_kerberos_ticket
+from RunKit.run_tools import timed_call_wrapper, update_kerberos_ticket
+from RunKit.grid_tools import gfal_copy_safe, gfal_exists
+import sys
+sys.path.append('/usr/lib64/python3.9/site-packages')
 
 law.contrib.load("htcondor")
+law.contrib.load("wlcg")
 
 def parse_int_list(orig_list):
   result = set()
@@ -163,6 +167,8 @@ class MkProdcard(Task, law.LocalWorkflow):
   def output(self):
     point = self.branch_data
     done_flag = os.path.join(self.prod_setup['prodcard_storage'], point['prod_card'].name, '.done')
+    if done_flag.startswith('/eos/'):
+      return law.wlcg.WLCGFileTarget(done_flag)
     return law.LocalFileTarget(done_flag)
 
   def run(self):
@@ -189,6 +195,8 @@ class MkGridpack(Task, HTCondorWorkflow, law.LocalWorkflow):
   def output(self):
     point = self.branch_data
     done_flag = os.path.join(self.prod_setup['gridpack_storage'], point['prod_card'].name, '.done')
+    if done_flag.startswith('/eos/'):
+      return law.wlcg.WLCGFileTarget(done_flag)
     return law.LocalFileTarget(done_flag)
 
   def run(self):
@@ -227,6 +235,8 @@ class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
     file_name_prefix = step_to_file_name[self.prod_setup['last_step']]
     file_name = f'{file_name_prefix}_{run}.root'
     root_file = os.path.join(self.prod_setup['output_storage'], era, point['prod_card'].name, file_name)
+    if root_file.startswith('/eos/'):
+      return law.wlcg.WLCGFileTarget(root_file)
     return law.LocalFileTarget(root_file)
 
   def run(self):
@@ -264,6 +274,10 @@ class RunProd(Task, HTCondorWorkflow, law.LocalWorkflow):
       prev_root_file = None
 
     work_dir, work_dir_is_tmp = self.law_job_home()
+    if gridpack_path.startswith('/eos/'):
+      gridpack_path = 'davs://eosuserhttp.cern.ch:443/' + gridpack_path
+      gfal_copy_safe(gridpack_path, os.path.join(work_dir, gridpack_file))
+      gridpack_path = os.path.join(work_dir, gridpack_file)
     run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step, run, n_evt, output_dir,
              prev_root_file, work_dir, remove_outputs=True)
     if work_dir_is_tmp:
@@ -297,6 +311,8 @@ class MkL1Tuples(Task, HTCondorWorkflow, law.LocalWorkflow):
     file_name_prefix = 'l1Tuple'
     file_name = f'{file_name_prefix}_{run}.root'
     root_file = os.path.join(self.prod_setup['output_storage_l1'], era, point['prod_card'].name, file_name)
+    if root_file.startswith('/eos/'):
+      return law.wlcg.WLCGFileTarget(root_file)
     return law.LocalFileTarget(root_file)
 
   def run(self):
