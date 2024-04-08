@@ -139,15 +139,6 @@ action() {
     autoload bashcompinit
     bashcompinit
   fi
-  # source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_102 x86_64-centos${os_version}-gcc11-opt
-  # alias python=python3
-  # source /afs/cern.ch/user/m/mrieger/public/law_sw/setup.sh
-  # export PATH=$ANALYSIS_PATH/scripts:$PATH
-  # mkdir -p $ANALYSIS_PATH/scripts
-  # ln -s /usr/bin/python3 $ANALYSIS_PATH/scripts/python
-
-  # source "$( law3 completion )" ""
-
   source /cvmfs/sft.cern.ch/lcg/views/setupViews.sh LCG_102 x86_64-centos${os_version}-gcc11-opt
   source /afs/cern.ch/user/m/mrieger/public/law_sw/setup.sh
 
