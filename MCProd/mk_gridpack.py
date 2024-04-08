@@ -2,19 +2,26 @@ import os
 import re
 import shutil
 import sys
+from RunKit.grid_tools import gfal_ls_safe
 
 if __name__ == "__main__":
   file_dir = os.path.dirname(os.path.abspath(__file__))
   sys.path.append(os.path.dirname(file_dir))
   __package__ = 'MCProd'
 
-from RunKit.sh_tools import sh_call
+from RunKit.run_tools import ps_call
 from .mk_prodcard import ProdCard
 
 def find_gridpack(path, prod_card_name):
   tarballs = []
   name_pattern = re.compile(f'{prod_card_name}_(.*)_tarball.tar.xz')
-  for file in os.listdir(path):
+  if path.startswith('/eos/'):
+    path = 'davs://eosuserhttp.cern.ch:443/' + path
+    gridpack_listdir = [item.name for item in gfal_ls_safe(path)]
+  else:
+    gridpack_listdir = os.listdir(path)
+  print(gridpack_listdir)
+  for file in gridpack_listdir:
     match = name_pattern.match(file)
     if match:
       tarballs.append((file, match.group(1)))
@@ -46,7 +53,7 @@ def mk_gridpack(prodcard_dir, central_output_dir, gen_era):
   run_singularity = os.environ['OS_VERSION'] != 'CentOS7'
   if run_singularity:
     cmd = f'/cvmfs/cms.cern.ch/common/cmssw-cc7 --command-to-run bash ' + cmd
-  sh_call([cmd], shell=True, cwd=gen_path, env={}, verbose=1)
+  ps_call([cmd], shell=True, cwd=gen_path, env={}, verbose=1)
 
   run_log = prod_card.name + '.log'
   gridpack, cond = find_gridpack(gen_path, prod_card.name)

@@ -1,7 +1,7 @@
 import glob
 import os
 import shutil
-from RunKit.sh_tools import sh_call
+from RunKit.run_tools import ps_call
 from RunKit.envToJson import get_cmsenv
 
 def mk_genTuple(input, output, source, config, cmssw, verbose):
@@ -17,7 +17,7 @@ def mk_genTuple(input, output, source, config, cmssw, verbose):
     os.remove(output)
   out_tmp = output + '.tmp.root'
   env = get_cmsenv(cmssw)
-  sh_call(['cmsRun', config, f'inputFiles={input_str}', f'output={out_tmp}', f'source={source}'],
+  ps_call(['cmsRun', config, f'inputFiles={input_str}', f'output={out_tmp}', f'source={source}'],
           env=env, verbose=verbose)
   shutil.move(out_tmp, output)
   print(f'GenTuple "{output}" successfully created.')

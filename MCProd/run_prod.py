@@ -2,7 +2,8 @@ import os
 import shutil
 import yaml
 from RunKit.envToJson import get_cmsenv
-from RunKit.sh_tools import sh_call
+from RunKit.run_tools import ps_call
+from RunKit.grid_tools import gfal_copy_safe
 
 step_to_file_name = {
   "LHEGEN": "gen",
@@ -91,8 +92,8 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
         cmd += 'cmsDriver.py'
         if step in [ 'LHEGEN', 'LHEGS' ]:
           gridpack_path = os.path.abspath(gridpack_path)
-          if not os.path.exists(gridpack_path):
-            raise RuntimeError(f'gridpack file {gridpack_path} not found.')
+          # if not os.path.exists(gridpack_path):
+          #   raise RuntimeError(f'gridpack file {gridpack_path} not found.')
 
           fragment_dir, fragment_name = os.path.split(fragment_path)
           fragment_link = os.path.join('Configuration', 'GenProduction', 'python', fragment_name)
@@ -150,7 +151,7 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
         # env_line = ' '.join(env_line)
         # cmd = f"{sing_cmd} --command-to-run env {env_line} "
         # cmd += 'head /eos/home-k/kandroso/cms-hnl/gridpacks/13.6TeV/HeavyNeutrino_trilepton_M-2_V-0.0135_mu_massiveAndCKM_LO/HeavyNeutrino_trilepton_M-2_V-0.0135_mu_massiveAndCKM_LO_slc7_amd64_gcc700_CMSSW_10_6_19_tarball.tar.xz'
-        sh_call([cmd], shell=True, env=cmssw_env[cmssw_key], cwd=work_dir, verbose=1)
+        ps_call([cmd], shell=True, env=cmssw_env[cmssw_key], cwd=work_dir, verbose=1)
         # raise RuntimeError('stop')
 
       except:
@@ -158,9 +159,13 @@ def run_prod(gridpack_path, fragment_path, cond_path, era, first_step, last_step
           os.remove(step_out)
         raise
 
-    os.makedirs(output_path, exist_ok=True)
-    shutil.copy(os.path.join(work_dir, f'{last_step}.root'),
-                os.path.join(output_path, f'{step_to_file_name[last_step]}_{seed}.root'))
+    if output_path.startswith('/eos/'):
+      gfal_copy_safe(os.path.join(work_dir, f'{last_step}.root'),
+                'davs://eosuserhttp.cern.ch/' + os.path.join(output_path, f'{step_to_file_name[last_step]}_{seed}.root'))
+    else:
+      os.makedirs(output_path, exist_ok=True)
+      shutil.copy(os.path.join(work_dir, f'{last_step}.root'),
+                  os.path.join(output_path, f'{step_to_file_name[last_step]}_{seed}.root'))
     return all_step_params, cmssw_env
   finally:
     if remove_outputs:
