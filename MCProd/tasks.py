@@ -14,8 +14,6 @@ from .mk_l1tuple import mk_l1tuple
 from RunKit.grid_helper_tasks import CreateVomsProxy
 from RunKit.run_tools import timed_call_wrapper, update_kerberos_ticket
 from RunKit.grid_tools import gfal_copy_safe, gfal_exists
-import sys
-sys.path.append('/usr/lib64/python3.9/site-packages')
 
 law.contrib.load("htcondor")
 law.contrib.load("wlcg")
